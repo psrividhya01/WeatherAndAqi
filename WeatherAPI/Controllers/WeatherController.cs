@@ -26,5 +26,17 @@ namespace WeatherAPI.Controllers
             var data = await _service.GetCurrentWeatherAsync(city);
             return Ok(data);
         }
+
+        [HttpGet("hourly")]
+        public async Task<IActionResult> GetHourly([FromQuery] string city)
+        {
+            if (string.IsNullOrWhiteSpace(city))
+            {
+                return BadRequest("City name is required.");
+            }
+
+            var data = await _service.GetHourlyWeatherAsync(city);
+            return Ok(data);
+        }
     }
 }

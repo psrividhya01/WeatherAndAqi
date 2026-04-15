@@ -1,12 +1,18 @@
-﻿namespace WeatherAPI.DTOs
-{
-    public class ForeCastDto
-    {
-        public DateTime? Date { get; set; }
-        public double TempMin { get; set; }
-        public double TempMax { get; set; }
-        public int ConditionCode { get; set; }
-        public string ConditionDescription { get; set; } = string.Empty;
+using System.Collections.Generic;
 
+namespace WeatherAPI.DTOs
+{
+    public class ForecastDto
+    {
+        public string City { get; set; } = string.Empty;
+        public List<ForecastDayDto> Days { get; set; } = new();
+    }
+
+    public class ForecastDayDto
+    {
+        public string Date { get; set; } = string.Empty;
+        public double MinTemp { get; set; }
+        public double MaxTemp { get; set; }
+        public string Description { get; set; } = string.Empty;
     }
 }
