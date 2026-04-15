@@ -1,0 +1,25 @@
+<div class="container">
+  <div class="header">
+    <span class="back">❮</span>
+    <h2>City management</h2>
+    <div class="icons">
+      <span>✏️</span>
+      <span>➕</span>
+    </div>
+  </div>
+
+  <div class="search-box">
+    <input type="text" placeholder="Search for city weather">
+  </div>
+
+  <div class="card" *ngFor="let city of cities" (click)="goToDetails(city.name)">
+    <div class="left">
+      <h3>{{ city.name }}</h3>
+      <p>{{ city.desc }} {{ city.range }}</p>
+    </div>
+    <div class="right">
+      <span class="temp">{{ city.temp }}</span>
+      <span class="unit">°C</span>
+    </div>
+  </div>
+</div>
