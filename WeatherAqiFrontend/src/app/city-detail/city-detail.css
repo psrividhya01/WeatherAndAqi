@@ -1,0 +1,135 @@
+.detail-wrapper {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 36px;
+  background: #ffffff;
+  border-radius: 32px;
+  box-shadow: 0 22px 64px rgba(15, 23, 42, 0.08);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #eef2ff;
+  color: #3445e3;
+  cursor: pointer;
+}
+
+.hero {
+  padding: 28px 30px;
+  border-radius: 32px;
+  background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%);
+  border: 1px solid #dde6fb;
+  margin-bottom: 28px;
+}
+
+.hero .main-temp {
+  margin: 0;
+  font-size: 3.4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.hero .main-temp span {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.hero .condition,
+.hero .stats {
+  margin: 10px 0 0;
+  color: #475569;
+  font-size: 0.98rem;
+}
+
+.forecast-panel {
+  display: grid;
+  gap: 28px;
+}
+
+.hourly-scroll {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .detail-wrapper {
+    padding: 24px;
+  }
+
+  .hourly-scroll {
+    display: flex;
+    overflow-x: auto;
+    grid-template-columns: none;
+  }
+}
+
+.hour-item {
+  flex: 0 0 auto;
+  min-width: 84px;
+  padding: 14px;
+  border-radius: 22px;
+  background: #f8f9ff;
+  text-align: center;
+  border: 1px solid #e5e7ff;
+}
+
+.hour-item p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.icon-sun {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eff6ff;
+  margin: 10px auto;
+  font-size: 1.1rem;
+}
+
+.daily-list {
+  display: grid;
+  gap: 14px;
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.day-row span {
+  color: #344054;
+  font-size: 0.95rem;
+}
+
+.day-row b {
+  font-weight: 700;
+}

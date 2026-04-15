@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-city-detail',
-  imports: [ActivatedRoute],
+  standalone: true,
+  imports: [RouterModule],
   templateUrl: './city-detail.html',
-  styleUrl: './city-detail.css',
+  styleUrls: ['./city-detail.css'],
 })
 export class CityDetail {
   cityName: string | null = '';
