@@ -7,6 +7,7 @@ namespace WeatherAPI.DTOs
         public double FeelsLike { get; set; }
         public int Humidity { get; set; }
         public double WindSpeed { get; set; }
+        public int Visibility { get; set; }
         public int ConditionCode { get; set; }
         public string Description { get; set; } = string.Empty;
     }

@@ -29,14 +29,15 @@ namespace WeatherAPI.ExternalServices
         {
             var url = $"https://api.openweathermap.org/data/2.5/forecast?q={cityName}&appid={_apiKey}&units=metric";
             var response = await _httpClient.GetAsync(url);
+
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }
 
         public async Task<string> GetHourlyWeatherAsync(string cityName)
         {
-            // OpenWeatherMap pro or generic forecast fallback logic mapping
-            var url = $"https://pro.openweathermap.org/data/2.5/forecast/hourly?q={cityName}&appid={_apiKey}&units=metric";
+            // Uses free OWM 5-day/3-hour forecast endpoint; service takes first 8 items = next 24 hours
+            var url = $"https://api.openweathermap.org/data/2.5/forecast?q={cityName}&appid={_apiKey}&units=metric";
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();

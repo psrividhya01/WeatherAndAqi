@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using WeatherAPI.Data;
 using WeatherAPI.ExternalServices;
 using WeatherAPI.Repositories;
@@ -10,30 +11,52 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// Register Dependencies
-builder.Services.AddSingleton<SqlDbConnectionFactory>();
+// ─── CORS — Allow Angular frontend to call this API ───────────────────────────
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularDev", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:4200",   // Angular dev server
+                "https://localhost:4200"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
-// Repositories
+// ─── Database ─────────────────────────────────────────────────────────────────
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ─── Repositories ─────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IWeatherCacheRepository, WeatherCacheRepository>();
 builder.Services.AddScoped<IHourlyCacheRepository, HourlyCacheRepository>();
 builder.Services.AddScoped<IForecastCacheRepository, ForecastCacheRepository>();
+builder.Services.AddScoped<IAQICacheRepository, AQICacheRepository>(); // NEW
 
-// External API
+// ─── External API Clients ─────────────────────────────────────────────────────
 builder.Services.AddHttpClient<IWeatherApiClient, WeatherApiClient>();
+builder.Services.AddHttpClient<IAQIApiClient, AQIApiClient>(); // NEW
 
-// Services
+// ─── Services ─────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IWeatherService, WeatherService>();
 builder.Services.AddScoped<IForecastService, ForecastService>();
+builder.Services.AddScoped<IAQIService, AQIService>(); // NEW
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ─── Middleware Pipeline ───────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
+
+// CORS must come BEFORE UseAuthorization and MapControllers
+app.UseCors("AllowAngularDev");
 
 app.MapControllers();
 

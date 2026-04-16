@@ -5,7 +5,7 @@ using WeatherAPI.Interfaces;
 namespace WeatherAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/weather")]
     public class ForecastController : ControllerBase
     {
         private readonly IForecastService _service;
@@ -15,7 +15,8 @@ namespace WeatherAPI.Controllers
             _service = service;
         }
 
-        [HttpGet("seven-day")]
+        // GET /api/weather/forecast?city=Mumbai  (UC2)
+        [HttpGet("forecast")]
         public async Task<IActionResult> GetForecast([FromQuery] string city)
         {
             if (string.IsNullOrWhiteSpace(city))

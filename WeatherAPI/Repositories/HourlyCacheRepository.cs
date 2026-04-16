@@ -1,39 +1,43 @@
-using Dapper;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using WeatherAPI.Data;
-using WeatherAPI.Models;
 using WeatherAPI.Interfaces;
+using WeatherAPI.Models;
 
 namespace WeatherAPI.Repositories
 {
     public class HourlyCacheRepository : IHourlyCacheRepository
     {
-        private readonly SqlDbConnectionFactory _dbConnectionFactory;
+        private readonly AppDbContext _context;
 
-        public HourlyCacheRepository(SqlDbConnectionFactory dbConnectionFactory)
+        public HourlyCacheRepository(AppDbContext context)
         {
-            _dbConnectionFactory = dbConnectionFactory;
+            _context = context;
         }
 
         public async Task<HourlyCache?> GetCachedHourlyAsync(string cityName)
         {
-            using var connection = _dbConnectionFactory.CreateConnection();
-            var query = @"SELECT TOP 1 HourlyJson 
-                          FROM HourlyCache 
-                          WHERE CityName = @CityName 
-                          AND DATEDIFF(MINUTE, FetchedAt, GETDATE()) < 15
-                          ORDER BY FetchedAt DESC";
-            
-            return await connection.QueryFirstOrDefaultAsync<HourlyCache>(query, new { CityName = cityName });
+            var cutoff = DateTime.UtcNow.AddMinutes(-15);
+
+            return await _context.HourlyCaches
+                .Where(h => h.CityName == cityName && h.FetchedAt >= cutoff)
+                .OrderByDescending(h => h.FetchedAt)
+                .FirstOrDefaultAsync();
         }
 
         public async Task SaveHourlyAsync(string cityName, string json)
         {
-            using var connection = _dbConnectionFactory.CreateConnection();
-            var query = @"INSERT INTO HourlyCache (CityName, HourlyJson, FetchedAt)
-                          VALUES (@CityName, @HourlyJson, GETDATE())";
-                          
-            await connection.ExecuteAsync(query, new { CityName = cityName, HourlyJson = json });
+            var cache = new HourlyCache
+            {
+                CityName = cityName,
+                HourlyJson = json,
+                FetchedAt = DateTime.UtcNow
+            };
+
+            _context.HourlyCaches.Add(cache);
+            await _context.SaveChangesAsync();
         }
     }
 }
