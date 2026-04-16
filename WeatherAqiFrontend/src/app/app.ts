@@ -1,11 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { WeatherAqi } from './weather-aqi/weather-aqi';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, WeatherAqi],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrls: ['./app.css'],
 })

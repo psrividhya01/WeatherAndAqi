@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WeatherService } from '../service/weather.service';
 import { Router } from '@angular/router';
+import { CurrentWeather, HourlyForecastItem, DailyForecastItem } from '../models/weather.model';
 @Component({
   selector: 'app-weather',
   standalone: true,
@@ -16,8 +17,8 @@ export class WeatherAqi implements OnInit {
   tempMin = 0;
   tempMax = 0;
   feelsLike = 0;
-  hourlyForecast: any[] = [];
-  dailyForecast: any[] = [];
+  hourlyForecast: HourlyForecastItem[] = [];
+  dailyForecast: DailyForecastItem[] = [];
   activeTab: 'hourly' | 'daily' = 'hourly';
   menuOpen = false;
 
@@ -27,7 +28,7 @@ export class WeatherAqi implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.weatherService.getCurrentWeather().subscribe((data: any) => {
+    this.weatherService.getCurrentWeather().subscribe((data: CurrentWeather) => {
       this.city = data.city;
       this.currentTemp = data.currentTemp;
       this.condition = data.condition;
@@ -36,7 +37,7 @@ export class WeatherAqi implements OnInit {
       this.feelsLike = data.feelsLike;
     });
 
-    this.weatherService.getHourlyForecast().subscribe((data: any[]) => {
+    this.weatherService.getHourlyForecast().subscribe((data: HourlyForecastItem[]) => {
       this.hourlyForecast = data;
     });
 
