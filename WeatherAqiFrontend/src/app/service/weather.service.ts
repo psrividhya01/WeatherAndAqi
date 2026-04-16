@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { CurrentWeather, HourlyForecastItem, DailyForecastItem } from '../models/weather.model';
 
 @Injectable({ providedIn: 'root' })
 export class WeatherService {
@@ -8,21 +9,15 @@ export class WeatherService {
 
   constructor(private http: HttpClient) {}
 
-  getCurrentWeather(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/current`);
-    // Expected response:
-    // { city, currentTemp, condition, tempMin, tempMax, feelsLike }
+  getCurrentWeather(): Observable<CurrentWeather> {
+    return this.http.get<CurrentWeather>(`${this.baseUrl}/current`);
   }
 
-  getHourlyForecast(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/hourly`);
-    // Expected response:
-    // [{ time: '14:00', icon: '⛅', active: true }, ...]
+  getHourlyForecast(): Observable<HourlyForecastItem[]> {
+    return this.http.get<HourlyForecastItem[]>(`${this.baseUrl}/hourly`);
   }
 
-  getDailyForecast(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/daily`);
-    // Expected response:
-    // [{ label: 'Today', icon: '☀️', min: 27, max: 35, isToday: true }, ...]
+  getDailyForecast(): Observable<DailyForecastItem[]> {
+    return this.http.get<DailyForecastItem[]>(`${this.baseUrl}/daily`);
   }
 }

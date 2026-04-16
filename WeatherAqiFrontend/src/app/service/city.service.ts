@@ -1,13 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface CityItem {
-  name: string;
-  temp: number;
-  desc?: string;
-  range?: string;
-}
+import { City } from '../models/city.model';
 
 @Injectable({ providedIn: 'root' })
 export class CityService {
@@ -15,9 +9,7 @@ export class CityService {
 
   constructor(private http: HttpClient) {}
 
-  getCities(): Observable<CityItem[]> {
-    return this.http.get<CityItem[]>(`${this.baseUrl}/cities`);
-    // Expected response:
-    // [{ name: 'Chennai', temp: 34, desc: 'Mostly clear', range: '27 ~ 35°C' }, ...]
+  getCities(): Observable<City[]> {
+    return this.http.get<City[]>(`${this.baseUrl}/cities`);
   }
 }
