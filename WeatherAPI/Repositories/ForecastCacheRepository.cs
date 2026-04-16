@@ -1,39 +1,43 @@
-using Dapper;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using WeatherAPI.Data;
-using WeatherAPI.Models;
 using WeatherAPI.Interfaces;
+using WeatherAPI.Models;
 
 namespace WeatherAPI.Repositories
 {
     public class ForecastCacheRepository : IForecastCacheRepository
     {
-        private readonly SqlDbConnectionFactory _dbConnectionFactory;
+        private readonly AppDbContext _context;
 
-        public ForecastCacheRepository(SqlDbConnectionFactory dbConnectionFactory)
+        public ForecastCacheRepository(AppDbContext context)
         {
-            _dbConnectionFactory = dbConnectionFactory;
+            _context = context;
         }
 
         public async Task<ForecastCache?> GetCachedForecastAsync(string cityName)
         {
-            using var connection = _dbConnectionFactory.CreateConnection();
-            var query = @"SELECT TOP 1 ForecastJson 
-                          FROM ForecastCache 
-                          WHERE CityName = @CityName 
-                          AND DATEDIFF(MINUTE, FetchedAt, GETDATE()) < 15
-                          ORDER BY FetchedAt DESC";
-            
-            return await connection.QueryFirstOrDefaultAsync<ForecastCache>(query, new { CityName = cityName });
+            var cutoff = DateTime.UtcNow.AddMinutes(-15);
+
+            return await _context.ForecastCaches
+                .Where(f => f.CityName == cityName && f.FetchedAt >= cutoff)
+                .OrderByDescending(f => f.FetchedAt)
+                .FirstOrDefaultAsync();
         }
 
         public async Task SaveForecastAsync(string cityName, string json)
         {
-            using var connection = _dbConnectionFactory.CreateConnection();
-            var query = @"INSERT INTO ForecastCache (CityName, ForecastJson, FetchedAt)
-                          VALUES (@CityName, @ForecastJson, GETDATE())";
-                          
-            await connection.ExecuteAsync(query, new { CityName = cityName, ForecastJson = json });
+            var cache = new ForecastCache
+            {
+                CityName = cityName,
+                ForecastJson = json,
+                FetchedAt = DateTime.UtcNow
+            };
+
+            _context.ForecastCaches.Add(cache);
+            await _context.SaveChangesAsync();
         }
     }
 }

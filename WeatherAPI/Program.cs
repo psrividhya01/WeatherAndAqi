@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using WeatherAPI.Data;
 using WeatherAPI.ExternalServices;
 using WeatherAPI.Repositories;
@@ -9,9 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-
-// Register Dependencies
-builder.Services.AddSingleton<SqlDbConnectionFactory>();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Repositories
 builder.Services.AddScoped<IWeatherCacheRepository, WeatherCacheRepository>();

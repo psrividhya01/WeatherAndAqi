@@ -2,8 +2,9 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using WeatherAPI.Interfaces;
 using WeatherAPI.DTOs;
+using WeatherAPI.Interfaces;
+using WeatherAPI.Mapping;
 
 namespace WeatherAPI.Services
 {
@@ -22,76 +23,63 @@ namespace WeatherAPI.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        // UC1: GET /api/weather/current?city=
         public async Task<CurrentWeatherDto> GetCurrentWeatherAsync(string cityName)
         {
             try
             {
                 string jsonResponse;
 
-                // 1. Check cache first
                 var cached = await _repo.GetCachedWeatherAsync(cityName);
                 if (cached != null && !string.IsNullOrEmpty(cached.ResponseJson))
                 {
-                    _logger.LogInformation("Returning weather data for {CityName} from cache.", cityName);
+                    _logger.LogInformation("Returning current weather for {CityName} from cache.", cityName);
                     jsonResponse = cached.ResponseJson;
                 }
                 else
                 {
-                    _logger.LogInformation("Cache miss for {CityName}. Fetching from external API.", cityName);
-                    // 2. If not in cache, call external API
+                    _logger.LogInformation("Cache miss for {CityName}. Fetching current weather from API.", cityName);
                     jsonResponse = await _api.GetWeatherAsync(cityName);
-                    // 3. Save to cache for future requests
                     await _repo.SaveWeatherAsync(cityName, jsonResponse);
                 }
 
-                // Parse the JSON
-                var doc = JsonDocument.Parse(jsonResponse);
-
-                var dto = new CurrentWeatherDto
-                {
-                    City = cityName,
-                    Temperature = doc.RootElement.GetProperty("main").GetProperty("temp").GetDouble(),
-                    FeelsLike = doc.RootElement.GetProperty("main").GetProperty("feels_like").GetDouble(),
-                    Humidity = doc.RootElement.GetProperty("main").GetProperty("humidity").GetInt32(),
-                    WindSpeed = doc.RootElement.GetProperty("wind").GetProperty("speed").GetDouble(),
-                    ConditionCode = doc.RootElement.GetProperty("weather")[0].GetProperty("id").GetInt32(),
-                    Description = doc.RootElement.GetProperty("weather")[0].GetProperty("description").GetString() ?? string.Empty
-                };
-
-                return dto;
+                using var doc = JsonDocument.Parse(jsonResponse);
+                return WeatherMapper.MapToCurrentWeatherDto(cityName, doc);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching weather data for {CityName}", cityName);
-                throw; 
+                _logger.LogError(ex, "Error fetching current weather for {CityName}", cityName);
+                throw;
             }
         }
 
+        // UC3: GET /api/weather/hourly?city=
         public async Task<HourlyWeatherDto> GetHourlyWeatherAsync(string cityName)
         {
             try
             {
                 string jsonResponse;
+
                 var cached = await _hourlyRepo.GetCachedHourlyAsync(cityName);
-                
                 if (cached != null && !string.IsNullOrEmpty(cached.HourlyJson))
                 {
-                    _logger.LogInformation("Returning hourly data for {CityName} from cache.", cityName);
+                    _logger.LogInformation("Returning hourly weather for {CityName} from cache.", cityName);
                     jsonResponse = cached.HourlyJson;
                 }
                 else
                 {
-                    _logger.LogInformation("Cache miss for {CityName}. Fetching hourly from external API.", cityName);
+                    _logger.LogInformation("Cache miss for {CityName}. Fetching hourly weather from API.", cityName);
                     jsonResponse = await _api.GetHourlyWeatherAsync(cityName);
                     await _hourlyRepo.SaveHourlyAsync(cityName, jsonResponse);
                 }
 
-                return new HourlyWeatherDto { City = cityName }; // Can expand detailed parsing here
+                using var doc = JsonDocument.Parse(jsonResponse);
+                return WeatherMapper.MapToHourlyWeatherDto(cityName, doc);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while fetching hourly data for {CityName}", cityName);
-                throw; 
+                _logger.LogError(ex, "Error fetching hourly weather for {CityName}", cityName);
+                throw;
             }
         }
     }

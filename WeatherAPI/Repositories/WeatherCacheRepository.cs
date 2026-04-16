@@ -1,40 +1,43 @@
-using Dapper;
-using System.Data;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using WeatherAPI.Data;
-using WeatherAPI.Models;
 using WeatherAPI.Interfaces;
+using WeatherAPI.Models;
 
 namespace WeatherAPI.Repositories
 {
     public class WeatherCacheRepository : IWeatherCacheRepository
     {
-        private readonly SqlDbConnectionFactory _dbConnectionFactory;
+        private readonly AppDbContext _context;
 
-        public WeatherCacheRepository(SqlDbConnectionFactory dbConnectionFactory)
+        public WeatherCacheRepository(AppDbContext context)
         {
-            _dbConnectionFactory = dbConnectionFactory;
+            _context = context;
         }
 
         public async Task<WeatherCache?> GetCachedWeatherAsync(string cityName)
         {
-            using var connection = _dbConnectionFactory.CreateConnection();
-            var query = @"SELECT TOP 1 ResponseJson 
-                      FROM WeatherCache 
-                      WHERE CityName = @CityName 
-                      AND DATEDIFF(MINUTE, FetchedAt, GETDATE()) < 15
-                      ORDER BY FetchedAt DESC";
-            
-            return await connection.QueryFirstOrDefaultAsync<WeatherCache>(query, new { CityName = cityName });
+            var cutoff = DateTime.UtcNow.AddMinutes(-15);
+
+            return await _context.WeatherCaches
+                .Where(w => w.CityName == cityName && w.FetchedAt >= cutoff)
+                .OrderByDescending(w => w.FetchedAt)
+                .FirstOrDefaultAsync();
         }
 
         public async Task SaveWeatherAsync(string cityName, string json)
         {
-            using var connection = _dbConnectionFactory.CreateConnection();
-            var query = @"INSERT INTO WeatherCache (CityName, ResponseJson, FetchedAt)
-                      VALUES (@CityName, @ResponseJson, GETDATE())";
-                      
-            await connection.ExecuteAsync(query, new { CityName = cityName, ResponseJson = json });
+            var cache = new WeatherCache
+            {
+                CityName = cityName,
+                ResponseJson = json,
+                FetchedAt = DateTime.UtcNow
+            };
+
+            _context.WeatherCaches.Add(cache);
+            await _context.SaveChangesAsync();
         }
     }
 }
