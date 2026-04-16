@@ -34,13 +34,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IWeatherCacheRepository, WeatherCacheRepository>();
 builder.Services.AddScoped<IHourlyCacheRepository, HourlyCacheRepository>();
 builder.Services.AddScoped<IForecastCacheRepository, ForecastCacheRepository>();
+builder.Services.AddScoped<IAQICacheRepository, AQICacheRepository>(); // NEW
 
-// ─── External API Client ───────────────────────────────────────────────────────
+// ─── External API Clients ─────────────────────────────────────────────────────
 builder.Services.AddHttpClient<IWeatherApiClient, WeatherApiClient>();
+builder.Services.AddHttpClient<IAQIApiClient, AQIApiClient>(); // NEW
 
 // ─── Services ─────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IWeatherService, WeatherService>();
 builder.Services.AddScoped<IForecastService, ForecastService>();
+builder.Services.AddScoped<IAQIService, AQIService>(); // NEW
 
 var app = builder.Build();
 

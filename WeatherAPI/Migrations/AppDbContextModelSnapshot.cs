@@ -22,6 +22,30 @@ namespace WeatherAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("WeatherAPI.Models.AQICache", b =>
+                {
+                    b.Property<int>("CacheId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CacheId"));
+
+                    b.Property<string>("AQIJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CityName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("FetchedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("CacheId");
+
+                    b.ToTable("AQICaches");
+                });
+
             modelBuilder.Entity("WeatherAPI.Models.ForecastCache", b =>
                 {
                     b.Property<int>("CacheId")
@@ -68,30 +92,6 @@ namespace WeatherAPI.Migrations
                     b.HasKey("CacheId");
 
                     b.ToTable("HourlyCaches");
-                });
-
-            modelBuilder.Entity("WeatherAPI.Models.HourlyWeatherCache", b =>
-                {
-                    b.Property<int>("CacheId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CacheId"));
-
-                    b.Property<string>("CityName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("FetchedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("HourlyJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("CacheId");
-
-                    b.ToTable("HourlyWeatherCaches");
                 });
 
             modelBuilder.Entity("WeatherAPI.Models.WeatherCache", b =>

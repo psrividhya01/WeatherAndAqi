@@ -12,5 +12,6 @@ namespace WeatherAPI.Data
         public DbSet<WeatherCache> WeatherCaches { get; set; }
         public DbSet<ForecastCache> ForecastCaches { get; set; }
         public DbSet<HourlyCache> HourlyCaches { get; set; }
+        public DbSet<AQICache> AQICaches { get; set; }
     }
 }

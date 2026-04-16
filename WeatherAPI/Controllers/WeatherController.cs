@@ -38,5 +38,18 @@ namespace WeatherAPI.Controllers
             var data = await _service.GetHourlyWeatherAsync(city);
             return Ok(data);
         }
+
+        // GET /api/weather/dashboard?city=Mumbai (Connects all data to frontend)
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard([FromQuery] string city)
+        {
+            if (string.IsNullOrWhiteSpace(city))
+            {
+                return BadRequest("City name is required.");
+            }
+
+            var data = await _service.GetWeatherDashboardAsync(city);
+            return Ok(data);
+        }
     }
 }

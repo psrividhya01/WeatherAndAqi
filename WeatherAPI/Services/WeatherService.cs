@@ -13,23 +13,31 @@ namespace WeatherAPI.Services
         private readonly IWeatherCacheRepository _repo;
         private readonly IHourlyCacheRepository _hourlyRepo;
         private readonly IWeatherApiClient _api;
+        private readonly IForecastService _forecastService;
+        private readonly IAQIService _aqiService;
         private readonly ILogger<WeatherService> _logger;
 
-        public WeatherService(IWeatherCacheRepository repo, IHourlyCacheRepository hourlyRepo, IWeatherApiClient api, ILogger<WeatherService> logger)
+        public WeatherService(
+            IWeatherCacheRepository repo, 
+            IHourlyCacheRepository hourlyRepo, 
+            IWeatherApiClient api, 
+            IForecastService forecastService,
+            IAQIService aqiService,
+            ILogger<WeatherService> logger)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
             _hourlyRepo = hourlyRepo ?? throw new ArgumentNullException(nameof(hourlyRepo));
             _api = api ?? throw new ArgumentNullException(nameof(api));
+            _forecastService = forecastService ?? throw new ArgumentNullException(nameof(forecastService));
+            _aqiService = aqiService ?? throw new ArgumentNullException(nameof(aqiService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // UC1: GET /api/weather/current?city=
         public async Task<CurrentWeatherDto> GetCurrentWeatherAsync(string cityName)
         {
             try
             {
                 string jsonResponse;
-
                 var cached = await _repo.GetCachedWeatherAsync(cityName);
                 if (cached != null && !string.IsNullOrEmpty(cached.ResponseJson))
                 {
@@ -53,13 +61,11 @@ namespace WeatherAPI.Services
             }
         }
 
-        // UC3: GET /api/weather/hourly?city=
         public async Task<HourlyWeatherDto> GetHourlyWeatherAsync(string cityName)
         {
             try
             {
                 string jsonResponse;
-
                 var cached = await _hourlyRepo.GetCachedHourlyAsync(cityName);
                 if (cached != null && !string.IsNullOrEmpty(cached.HourlyJson))
                 {
@@ -81,6 +87,27 @@ namespace WeatherAPI.Services
                 _logger.LogError(ex, "Error fetching hourly weather for {CityName}", cityName);
                 throw;
             }
+        }
+
+        // UC: Unified Dashboard (Aggregates everything for the frontend)
+        public async Task<WeatherResponseDto> GetWeatherDashboardAsync(string cityName)
+        {
+            _logger.LogInformation("Fetching unified dashboard data for {CityName}", cityName);
+
+            // Fetch sequential to avoid EF Core DbContext concurrency issues
+            var current = await GetCurrentWeatherAsync(cityName);
+            var hourly = await GetHourlyWeatherAsync(cityName);
+            var forecast = await _forecastService.GetForecastAsync(cityName);
+            var aqi = await _aqiService.GetAQIAsync(cityName);
+
+            return new WeatherResponseDto
+            {
+                City = cityName,
+                CurrentWeather = current,
+                Hourly = hourly.Hours,
+                Forecast = forecast.Days,
+                AQI = aqi
+            };
         }
     }
 }
