@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using WeatherAPI.DTOs;
 
@@ -13,17 +15,23 @@ namespace WeatherAPI.Mapping
 
             int aqiValue = main.GetProperty("aqi").GetInt32();
 
+            var pollutants = new Dictionary<string, PollutantDto>
+            {
+                ["pm25"] = new PollutantDto { CurrentValue = components.GetProperty("pm2_5").GetDouble(), WHOlimit = 25 },
+                ["pm10"] = new PollutantDto { CurrentValue = components.GetProperty("pm10").GetDouble(), WHOlimit = 50 },
+                ["co"] = new PollutantDto { CurrentValue = components.GetProperty("co").GetDouble(), WHOlimit = 4 },
+                ["no2"] = new PollutantDto { CurrentValue = components.GetProperty("no2").GetDouble(), WHOlimit = 40 },
+                ["so2"] = new PollutantDto { CurrentValue = components.GetProperty("so2").GetDouble(), WHOlimit = 20 },
+                ["o3"] = new PollutantDto { CurrentValue = components.GetProperty("o3").GetDouble(), WHOlimit = 100 }
+            };
+
             return new AQIDto
             {
                 City = cityName,
-                Aqi = aqiValue,
+                AQIScore = aqiValue, // Matches the new property name
                 Status = GetAqiStatus(aqiValue),
-                Co = components.GetProperty("co").GetDouble(),
-                No2 = components.GetProperty("no2").GetDouble(),
-                O3 = components.GetProperty("o3").GetDouble(),
-                So2 = components.GetProperty("so2").GetDouble(),
-                Pm2_5 = components.GetProperty("pm2_5").GetDouble(),
-                Pm10 = components.GetProperty("pm10").GetDouble()
+                Category = GetAqiStatus(aqiValue),
+                Pollutants = pollutants
             };
         }
 

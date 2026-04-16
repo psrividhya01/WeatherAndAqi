@@ -4,60 +4,66 @@ using WeatherAPI.ExternalServices;
 using WeatherAPI.Repositories;
 using WeatherAPI.Services;
 using WeatherAPI.Interfaces;
+using WeatherAPI.BackgroundServices;
+using WeatherAPI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ─── 1. SERVICES ─────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// ─── CORS — Allow Angular frontend to call this API ───────────────────────────
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularDev", policy =>
     {
-        policy
-            .WithOrigins(
-                "http://localhost:4200",   // Angular dev server
-                "https://localhost:4200"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+              .AllowAnyHeader().AllowAnyMethod();
     });
 });
 
-// ─── Database ─────────────────────────────────────────────────────────────────
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ─── Repositories ─────────────────────────────────────────────────────────────
+// Repositories
 builder.Services.AddScoped<IWeatherCacheRepository, WeatherCacheRepository>();
 builder.Services.AddScoped<IHourlyCacheRepository, HourlyCacheRepository>();
 builder.Services.AddScoped<IForecastCacheRepository, ForecastCacheRepository>();
-builder.Services.AddScoped<IAQICacheRepository, AQICacheRepository>(); // NEW
+builder.Services.AddScoped<IAQICacheRepository, AQICacheRepository>();
 
-// ─── External API Clients ─────────────────────────────────────────────────────
+// External API Clients
 builder.Services.AddHttpClient<IWeatherApiClient, WeatherApiClient>();
-builder.Services.AddHttpClient<IAQIApiClient, AQIApiClient>(); // NEW
 
-// ─── Services ─────────────────────────────────────────────────────────────────
+// Services
 builder.Services.AddScoped<IWeatherService, WeatherService>();
 builder.Services.AddScoped<IForecastService, ForecastService>();
-builder.Services.AddScoped<IAQIService, AQIService>(); // NEW
+builder.Services.AddScoped<IAQIService, AQIService>();
+
+// Background Jobs (Module 3 Task 3)
+builder.Services.AddHostedService<AQIBackgroundService>();
 
 var app = builder.Build();
 
-// ─── Middleware Pipeline ───────────────────────────────────────────────────────
+// ─── 2. MIDDLEWARE & STARTUP ──────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
+// Global Exception Middleware (Module 3 Task 6)
+app.UseMiddleware<ExceptionMiddleware>();
+
 app.UseHttpsRedirection();
-
-// CORS must come BEFORE UseAuthorization and MapControllers
 app.UseCors("AllowAngularDev");
-
 app.MapControllers();
+
+// ─── 3. SEEDING (Module 3 Task 4) ──────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    DbInitializer.Seed(context);
+}
 
 app.Run();

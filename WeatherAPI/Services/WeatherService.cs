@@ -89,25 +89,42 @@ namespace WeatherAPI.Services
             }
         }
 
-        // UC: Unified Dashboard (Aggregates everything for the frontend)
+        // UC: Unified Dashboard (Enhanced with smart logic)
         public async Task<WeatherResponseDto> GetWeatherDashboardAsync(string cityName)
         {
             _logger.LogInformation("Fetching unified dashboard data for {CityName}", cityName);
 
-            // Fetch sequential to avoid EF Core DbContext concurrency issues
+            // Sequential fetch to ensure thread safety for the Scoped DbContext
             var current = await GetCurrentWeatherAsync(cityName);
             var hourly = await GetHourlyWeatherAsync(cityName);
             var forecast = await _forecastService.GetForecastAsync(cityName);
             var aqi = await _aqiService.GetAQIAsync(cityName);
 
+            // ENHANCEMENT: Generate a Smart Summary
+            string summary = GenerateDashboardSummary(current, aqi);
+
             return new WeatherResponseDto
             {
                 City = cityName,
+                Timestamp = DateTime.Now,
+                Summary = summary,
                 CurrentWeather = current,
                 Hourly = hourly.Hours,
                 Forecast = forecast.Days,
                 AQI = aqi
             };
+        }
+
+        private string GenerateDashboardSummary(CurrentWeatherDto weather, AQIDto aqi)
+        {
+            string weatherNote = weather.Temperature > 30 ? "It's a hot day." : 
+                                 weather.Temperature < 10 ? "It's quite chilly." : "The temperature is pleasant.";
+            
+            string aqiNote = aqi.Status == "Good" ? "Air quality is excellent for outdoor activities." :
+                             aqi.Status == "Moderate" ? "Air quality is acceptable." :
+                             "Air quality is poor; consider limiting outdoor exposure.";
+
+            return $"{weatherNote} {aqiNote} Don't forget to check the hourly timeline for changes!";
         }
     }
 }

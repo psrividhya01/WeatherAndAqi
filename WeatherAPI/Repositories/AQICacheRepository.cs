@@ -17,22 +17,29 @@ namespace WeatherAPI.Repositories
             _context = context;
         }
 
-        public async Task<AQICache?> GetCachedAQIAsync(string cityName)
+        public async Task<string?> GetCachedAQI(string city)
         {
-            var cutoff = DateTime.UtcNow.AddMinutes(-30); // AQI usually changes slower
+            var cutoff = DateTime.UtcNow.AddMinutes(-30);
 
-            return await _context.AQICaches
-                .Where(a => a.CityName == cityName && a.FetchedAt >= cutoff)
+            var cache = await _context.AQICaches
+                .Where(a => a.CityName == city && a.FetchedAt >= cutoff)
                 .OrderByDescending(a => a.FetchedAt)
                 .FirstOrDefaultAsync();
+
+            return cache?.AQIJson;
         }
 
-        public async Task SaveAQIAsync(string cityName, string json)
+        public async Task SaveAQI(string city, string json)
         {
+            // Parse for metadata storage
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var aqi = doc.RootElement.GetProperty("list")[0].GetProperty("main").GetProperty("aqi").GetInt32();
+
             var cache = new AQICache
             {
-                CityName = cityName,
+                CityName = city,
                 AQIJson = json,
+                AQIScore = aqi,
                 FetchedAt = DateTime.UtcNow
             };
 

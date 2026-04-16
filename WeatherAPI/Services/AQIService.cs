@@ -1,62 +1,126 @@
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using WeatherAPI.Data;
 using WeatherAPI.DTOs;
 using WeatherAPI.Interfaces;
-using WeatherAPI.Mapping;
 
 namespace WeatherAPI.Services
 {
     public class AQIService : IAQIService
     {
         private readonly IAQICacheRepository _repo;
-        private readonly IAQIApiClient _api;
-        private readonly IWeatherApiClient _weatherApi; // To get lat/lon from city name
-        private readonly ILogger<AQIService> _logger;
+        private readonly IWeatherApiClient _api;
+        private readonly AppDbContext _context;
 
-        public AQIService(IAQICacheRepository repo, IAQIApiClient api, IWeatherApiClient weatherApi, ILogger<AQIService> logger)
+        public AQIService(IAQICacheRepository repo, IWeatherApiClient api, AppDbContext context)
         {
-            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
-            _api = api ?? throw new ArgumentNullException(nameof(api));
-            _weatherApi = weatherApi ?? throw new ArgumentNullException(nameof(weatherApi));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _repo = repo;
+            _api = api;
+            _context = context;
         }
 
-        public async Task<AQIDto> GetAQIAsync(string cityName)
+        public async Task<AQIDto> GetAQIAsync(string city)
         {
-            try
+            var cached = await _repo.GetCachedAQI(city);
+            string json;
+
+            if (cached != null)
             {
-                string jsonResponse;
-                var cached = await _repo.GetCachedAQIAsync(cityName);
-
-                if (cached != null && !string.IsNullOrEmpty(cached.AQIJson))
-                {
-                    _logger.LogInformation("Returning AQI for {CityName} from cache.", cityName);
-                    jsonResponse = cached.AQIJson;
-                }
-                else
-                {
-                    _logger.LogInformation("Cache miss for {CityName}. Fetching AQI from API.", cityName);
-                    
-                    // First get coordinates from weather API (simplest way since we already have it)
-                    var weatherJson = await _weatherApi.GetWeatherAsync(cityName);
-                    using var weatherDoc = JsonDocument.Parse(weatherJson);
-                    double lat = weatherDoc.RootElement.GetProperty("coord").GetProperty("lat").GetDouble();
-                    double lon = weatherDoc.RootElement.GetProperty("coord").GetProperty("lon").GetDouble();
-
-                    jsonResponse = await _api.GetAQIAsync(lat, lon);
-                    await _repo.SaveAQIAsync(cityName, jsonResponse);
-                }
-
-                using var doc = JsonDocument.Parse(jsonResponse);
-                return AQIMapper.MapToAQIDto(cityName, doc);
+                json = cached;
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError(ex, "Error fetching AQI for {CityName}", cityName);
-                throw;
+                json = await _api.GetAQIData(city);
+                await _repo.SaveAQI(city, json);
             }
+
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement.GetProperty("list")[0];
+            var aqiRaw = root.GetProperty("main").GetProperty("aqi").GetInt32();
+            var components = root.GetProperty("components");
+
+            // 1. Correct AQI Category Mapping (Module 3 Task 2)
+            var category = GetProperAQICategory(aqiRaw);
+
+            // 2. Fetch Pollutant Info from DB (Module 3 Task 5)
+            var pollutantMaster = await _context.PollutantInfos.ToListAsync();
+            var advisory = await _context.AQIAdvisories
+                .FirstOrDefaultAsync(a => a.Category == category);
+
+            // 3. Map pollutants with safety limits and descriptions
+            var pollutants = new Dictionary<string, PollutantDto>
+            {
+                ["pm25"] = MapPollutant("pm2_5", components, 25, pollutantMaster),
+                ["pm10"] = MapPollutant("pm10", components, 50, pollutantMaster),
+                ["co"] = MapPollutant("co", components, 4, pollutantMaster),
+                ["no2"] = MapPollutant("no2", components, 40, pollutantMaster),
+                ["so2"] = MapPollutant("so2", components, 20, pollutantMaster),
+                ["o3"] = MapPollutant("o3", components, 100, pollutantMaster)
+            };
+
+            var dominant = pollutants
+                .OrderByDescending(p => p.Value.CurrentValue / (p.Value.WHOlimit == 0 ? 1 : p.Value.WHOlimit))
+                .First().Key;
+
+            return new AQIDto
+            {
+                City = city,
+                AQIScore = MapIndexToScore(aqiRaw),
+                Category = category,
+                Status = category,
+                DominantPollutant = dominant,
+                Pollutants = pollutants,
+                Advisory = advisory?.Advisory ?? "No advisory available."
+            };
+        }
+
+        public async Task<List<AQITrendDto>> GetAQITrendAsync(string city)
+        {
+            var history = await _context.AQIHistories
+                .Where(h => h.CityName == city)
+                .OrderByDescending(h => h.RecordedDate)
+                .Take(28) // Last 7 days (4 snapshots per day)
+                .Select(h => new AQITrendDto
+                {
+                    date = h.RecordedDate,
+                    AQIScore = MapIndexToScore(h.AQIScore)
+                })
+                .ToListAsync();
+
+            return history.OrderBy(h => h.date).ToList();
+        }
+
+        private PollutantDto MapPollutant(string key, JsonElement components, double limit, List<Models.PollutantInfo> master)
+        {
+            var info = master.FirstOrDefault(m => m.PollutantCode == key.Replace("_", ""));
+            return new PollutantDto
+            {
+                CurrentValue = components.GetProperty(key).GetDouble(),
+                WHOlimit = limit
+                // Description = info?.Description (Add this to DTO if needed)
+            };
+        }
+
+        private string GetProperAQICategory(int aqiIndex)
+        {
+            return aqiIndex switch
+            {
+                1 => "Good",
+                2 => "Fair",
+                3 => "Moderate",
+                4 => "Poor",
+                5 => "Very Poor",
+                _ => "Unknown"
+            };
+        }
+
+        private int MapIndexToScore(int index)
+        {
+            return index switch { 1 => 45, 2 => 90, 3 => 140, 4 => 190, 5 => 280, _ => 0 };
         }
     }
 }

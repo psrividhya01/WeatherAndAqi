@@ -22,6 +22,31 @@ namespace WeatherAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("WeatherAPI.Models.AQIAdvisory", b =>
+                {
+                    b.Property<int>("AdvisoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AdvisoryId"));
+
+                    b.Property<string>("Advisory")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SensitiveGroupNote")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("AdvisoryId");
+
+                    b.ToTable("AQIAdvisories");
+                });
+
             modelBuilder.Entity("WeatherAPI.Models.AQICache", b =>
                 {
                     b.Property<int>("CacheId")
@@ -30,9 +55,16 @@ namespace WeatherAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CacheId"));
 
+                    b.Property<string>("AQICategory")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("AQIJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("AQIScore")
+                        .HasColumnType("int");
 
                     b.Property<string>("CityName")
                         .IsRequired()
@@ -44,6 +76,29 @@ namespace WeatherAPI.Migrations
                     b.HasKey("CacheId");
 
                     b.ToTable("AQICaches");
+                });
+
+            modelBuilder.Entity("WeatherAPI.Models.AQIHistory", b =>
+                {
+                    b.Property<int>("HistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HistoryId"));
+
+                    b.Property<int>("AQIScore")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CityName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("RecordedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("HistoryId");
+
+                    b.ToTable("AQIHistories");
                 });
 
             modelBuilder.Entity("WeatherAPI.Models.ForecastCache", b =>
@@ -92,6 +147,28 @@ namespace WeatherAPI.Migrations
                     b.HasKey("CacheId");
 
                     b.ToTable("HourlyCaches");
+                });
+
+            modelBuilder.Entity("WeatherAPI.Models.PollutantInfo", b =>
+                {
+                    b.Property<string>("PollutantCode")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CommonSources")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("PollutantCode");
+
+                    b.ToTable("PollutantInfos");
                 });
 
             modelBuilder.Entity("WeatherAPI.Models.WeatherCache", b =>

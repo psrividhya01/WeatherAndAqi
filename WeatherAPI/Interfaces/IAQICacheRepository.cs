@@ -4,7 +4,8 @@ namespace WeatherAPI.Interfaces
 {
     public interface IAQICacheRepository
     {
-        Task<Models.AQICache?> GetCachedAQIAsync(string cityName);
-        Task SaveAQIAsync(string cityName, string json);
+        // Renamed to match user's requested service logic
+        Task<string?> GetCachedAQI(string city);
+        Task SaveAQI(string city, string json);
     }
 }

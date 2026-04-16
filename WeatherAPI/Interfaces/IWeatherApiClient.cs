@@ -7,5 +7,6 @@ namespace WeatherAPI.Interfaces
         Task<string> GetWeatherAsync(string cityName);
         Task<string> GetForecastAsync(string cityName);
         Task<string> GetHourlyWeatherAsync(string cityName);
+        Task<string> GetAQIData(string city);
     }
 }

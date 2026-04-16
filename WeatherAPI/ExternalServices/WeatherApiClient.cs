@@ -42,5 +42,31 @@ namespace WeatherAPI.ExternalServices
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }
+
+        public async Task<string> GetAQIData(string city)
+        {
+            // 1. Resolve City to Coordinates using the weather endpoint
+            var weatherUrl = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={_apiKey}";
+            var weatherResponse = await _httpClient.GetStringAsync(weatherUrl);
+            
+            using var doc = System.Text.Json.JsonDocument.Parse(weatherResponse);
+            var lat = doc.RootElement.GetProperty("coord").GetProperty("lat").GetDouble();
+            var lon = doc.RootElement.GetProperty("coord").GetProperty("lon").GetDouble();
+
+            // 2. Fetch Air Pollution Data
+            var aqiUrl = $"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={_apiKey}";
+            return await _httpClient.GetStringAsync(aqiUrl);
+        }
+
+        public async Task<(double lat, double lon)> GetCityCoordinates(string city)
+        {
+            var weatherUrl = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={_apiKey}";
+            var weatherResponse = await _httpClient.GetStringAsync(weatherUrl);
+            
+            using var doc = System.Text.Json.JsonDocument.Parse(weatherResponse);
+            var lat = doc.RootElement.GetProperty("coord").GetProperty("lat").GetDouble();
+            var lon = doc.RootElement.GetProperty("coord").GetProperty("lon").GetDouble();
+            return (lat, lon);
+        }
     }
 }

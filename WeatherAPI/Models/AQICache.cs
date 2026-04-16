@@ -9,6 +9,8 @@ namespace WeatherAPI.Models
         public int CacheId { get; set; }
         public string CityName { get; set; } = string.Empty;
         public string AQIJson { get; set; } = string.Empty;
+        public int AQIScore { get; set; }
+        public string AQICategory { get; set; } = string.Empty;
         public DateTime? FetchedAt { get; set; }
     }
 }

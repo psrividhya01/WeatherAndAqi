@@ -13,5 +13,8 @@ namespace WeatherAPI.Data
         public DbSet<ForecastCache> ForecastCaches { get; set; }
         public DbSet<HourlyCache> HourlyCaches { get; set; }
         public DbSet<AQICache> AQICaches { get; set; }
+        public DbSet<AQIAdvisory> AQIAdvisories { get; set; }
+        public DbSet<AQIHistory> AQIHistories { get; set; }
+        public DbSet<PollutantInfo> PollutantInfos { get; set; }
     }
 }
