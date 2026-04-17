@@ -1,0 +1,88 @@
+<div class="action-bar">
+  <h2>Global Weather & Air Quality Overview</h2>
+  <button class="btn-primary" (click)="exportDashboard()">📸 Export Snapshot</button>
+</div>
+
+<div class="dashboard-wrapper" #exportTarget>
+  
+  <div class="main-grid">
+    
+    <div class="left-col">
+      
+      <h3 class="section-title">Pinned Cities ({{ cities.length }}/4)</h3>
+      <div class="city-grid">
+        <div class="city-tile card" *ngFor="let city of cities; trackBy: trackByName">
+          <div class="tile-header">
+            <h4>{{ city.name }}</h4>
+            <span class="temp">{{ city.temp }}°C</span>
+          </div>
+          <p class="condition">{{ city.condition }}</p>
+          <div class="aqi-pill" [style.background]="getAqiColor(city.aqi)"> 
+            AQI {{ city.aqi }} - {{ city.aqiCategory }}
+          </div>
+        </div>
+      </div>
+
+      <h3 class="section-title">Regional Weather Map</h3>
+      <div class="card map-card">
+        <div id="weather-map"></div>
+      </div>
+
+    </div> <div class="right-col">
+      
+      <h3 class="section-title">City AQI Rankings</h3>
+      <div class="card table-card">
+        <table class="mat-table-replica">
+          <thead>
+            <tr>
+              <th>City Name</th>
+              <th class="sortable" (click)="sortCitiesByAqi()">
+                AQI Score {{ sortAscending ? '↑' : '↓' }}
+              </th>
+              <th>Category</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let city of cities">
+              <td><strong>{{ city.name }}</strong></td>
+              <td>
+                <span class="aqi-dot" [style.background]="getAqiColor(city.aqi)"></span>
+                {{ city.aqi }}
+              </td>
+              <td [style.color]="getAqiColor(city.aqi)">{{ city.aqiCategory }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="section-title">Weather Match Finder</h3>
+      <div class="card finder-card">
+        <p class="desc">Find global cities matching your ideal climate.</p>
+        
+        <form (ngSubmit)="findSimilarCities()" class="finder-form">
+          <div class="input-group">
+            <label>Target Temp (°C)</label>
+            <input type="number" [(ngModel)]="simTemp" name="temp">
+          </div>
+          <div class="input-group">
+            <label>Condition</label>
+            <select [(ngModel)]="simCondition" name="condition">
+              <option>Sunny</option>
+              <option>Cloudy</option>
+              <option>Rain</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-secondary">Find Matches</button>
+        </form>
+
+        <div class="results" *ngIf="similarCities.length > 0">
+          <h4>Top Matches</h4>
+          <div class="match-item" *ngFor="let match of similarCities">
+            <span class="m-name">{{ match.name }}</span>
+            <span class="m-data">{{ match.temp }}°C • {{ match.match }} Match</span>
+          </div>
+        </div>
+      </div>
+
+    </div> </div>
+</div>

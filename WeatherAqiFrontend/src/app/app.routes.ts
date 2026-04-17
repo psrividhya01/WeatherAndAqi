@@ -10,15 +10,12 @@ export const routes: Routes = [
     loadComponent: () => import('./weather-aqi/weather-aqi').then((m) => m.WeatherAqi),
   },
   {
-    path: 'settings',
-    loadComponent: () => import('./settings/settings').then((m) => m.SettingsComponent),
+    path: 'compare',
+    loadComponent: () => import('./multi-city/multi-city').then((m) => m.MultiCityComponent),
   },
   {
-    path: 'settings/hourly-interval',
-    loadComponent: () =>
-      import('./settings-hourly-interval/settings-hourly-interval').then(
-        (m) => m.HourlyIntervalComponent,
-      ),
+    path: 'settings',
+    loadComponent: () => import('./personalization/personalization').then((m) => m.PersonalizationComponent),
   },
   { path: '**', redirectTo: '' },
 ];

@@ -1,0 +1,182 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+:host {
+  font-family: 'Nunito', sans-serif;
+  color: #fff;
+  display: block;
+  background: #0f172a; /* Deep modern navy */
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Action Bar */
+.action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  max-width: 1400px;
+  margin: 0 auto 20px;
+}
+.action-bar h2 { margin: 0; font-weight: 800; }
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: #2563eb; }
+
+/* Dashboard Layout */
+.dashboard-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #0f172a;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 0 0 16px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 8px;
+}
+
+.card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+/* UC1: City Grid */
+.city-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+.city-tile {
+  margin-bottom: 0;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+.city-tile:hover { transform: translateY(-3px); }
+.tile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.tile-header h4 { margin: 0; font-size: 1.1rem; }
+.tile-header .temp { font-size: 1.5rem; font-weight: 800; }
+.city-tile .condition { margin: 0 0 12px 0; opacity: 0.7; }
+.aqi-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* UC2: Map */
+.map-card { padding: 0; overflow: hidden; }
+#weather-map {
+  width: 100%;
+  height: 350px; /* Crucial: Leaflet maps disappear if height is 0 */
+  z-index: 1; /* Prevents map from overlapping menus */
+}
+
+/* UC3: Material-Style Table */
+.table-card { padding: 0; overflow: hidden; }
+.mat-table-replica {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.mat-table-replica th {
+  background: rgba(255,255,255,0.05);
+  padding: 16px 20px;
+  font-weight: 600;
+  opacity: 0.8;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.mat-table-replica th.sortable { cursor: pointer; user-select: none; }
+.mat-table-replica th.sortable:hover { color: #3b82f6; opacity: 1; }
+.mat-table-replica td {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.aqi-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+/* UC4: Finder Form */
+.finder-card .desc { margin: 0 0 20px 0; opacity: 0.8; }
+.finder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.input-group label { font-size: 0.9rem; opacity: 0.8; }
+.input-group input, .input-group select {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+.results { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.match-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.m-name { font-weight: 700; }
+.m-data { opacity: 0.8; }
+
+/* Responsive Grid */
+@media (max-width: 968px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .city-grid { grid-template-columns: 1fr; }
+}

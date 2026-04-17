@@ -1,13 +1,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
 .weather-wrapper {
-  max-width: 400px;
-  margin: 0 auto;
-  background: linear-gradient(170deg, #1a237e 0%, #1976d2 40%, #42a5f5 75%, #90caf9 100%);
+  width: 100%;
   min-height: 100vh;
   font-family: 'Nunito', sans-serif;
   color: white;
-  padding-bottom: 20px;
+  padding-bottom: 40px;
+  box-sizing: border-box;
+  
+  /* NEW: Image sizing properties */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* Creates a cool parallax effect when scrolling */
+  transition: background-image 0.8s ease-in-out; 
+}
+
+/* Constrains layout on ultra-wide monitors so it doesn't stretch infinitely */
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Default Mobile Grid (Single Column) */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
 }
 
 /* Header Section */
@@ -15,10 +34,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 48px 20px 16px;
+  padding: 40px 0 20px;
 
   h1 {
-    font-size: 1.4rem;
+    font-size: 1.8rem; /* Made slightly bigger for desktop */
     font-weight: 700;
     margin: 0;
   }
@@ -50,10 +69,12 @@
   top: 30px;
   right: 0;
   background: white;
+  color: #333;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   z-index: 1000;
+  min-width: 120px;
 
   button {
     display: block;
@@ -64,6 +85,7 @@
     text-align: left;
     cursor: pointer;
     font-size: 14px;
+    color: #333;
 
     &:hover {
       background: #f5f5f5;
@@ -73,28 +95,37 @@
 
 /* Hero Section */
 .hero {
-  padding: 20px 24px;
+  padding: 20px 0;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 
   .temp {
-    font-size: 4rem;
+    font-size: 5rem; /* Larger default text */
     font-weight: 800;
     margin: 0;
+    line-height: 1;
 
     sup {
-      font-size: 1.5rem;
+      font-size: 2rem;
     }
   }
 
   .condition {
-    font-size: 1rem;
-    margin: 8px 0 4px;
+    font-size: 1.2rem;
+    margin: 12px 0 8px;
+    font-weight: 600;
+  }
+
+  .main-icon {
+    font-size: 1.5rem;
+    margin-right: 6px;
+    vertical-align: middle;
+    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.2)); 
   }
 
   .range {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     opacity: 0.85;
     margin: 0;
   }
@@ -104,26 +135,26 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(6px);
   border-radius: 20px;
-  padding: 6px 14px;
-  font-size: 0.85rem;
+  padding: 8px 16px;
+  font-size: 0.95rem;
   font-weight: 600;
+  transition: background 0.5s ease-in-out; 
 
   .leaf {
-    font-size: 1rem;
+    font-size: 1.2rem;
   }
 }
 
 /* Graph */
 .graph {
-  padding: 0 20px;
+  padding: 20px 0;
   margin-bottom: 20px;
 
   svg {
     width: 100%;
-    height: auto;
+    max-height: 150px;
   }
 }
 
@@ -132,19 +163,20 @@
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
   border-radius: 24px;
-  margin: 20px;
-  padding: 20px;
+  padding: 24px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 /* Tabs */
 .tabs {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 
   button {
     flex: 1;
-    padding: 10px;
+    padding: 12px;
     border: none;
     border-radius: 12px;
     cursor: pointer;
@@ -153,6 +185,7 @@
     background: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.7);
     transition: all 0.2s;
+    font-size: 1rem;
 
     &.active {
       background: rgba(255, 255, 255, 0.25);
@@ -165,7 +198,7 @@
 .hourly {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   overflow-x: auto;
   padding-bottom: 10px;
 
@@ -173,18 +206,18 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    min-width: 60px;
-    font-size: 0.8rem;
+    gap: 8px;
+    min-width: 65px;
+    font-size: 0.9rem;
     font-weight: 600;
     opacity: 0.7;
 
     .icon {
-      font-size: 1.5rem;
+      font-size: 1.8rem;
     }
 
     .temp-value {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
     }
 
     &.active {
@@ -197,52 +230,37 @@
 /* Daily Forecast */
 .daily {
   .section-title {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     opacity: 0.7;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
 }
 
 .day-row {
   display: grid;
-  grid-template-columns: 80px 32px 36px 1fr 36px;
+  grid-template-columns: 90px 40px 40px 1fr 40px;
   align-items: center;
-  gap: 8px;
-  padding: 12px 0;
+  gap: 12px;
+  padding: 14px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 600;
 
   &.today {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    margin: 0 -8px;
-    padding: 12px 8px;
+    border-radius: 12px;
+    margin: 0 -12px;
+    padding: 14px 12px;
   }
 
-  .label {
-    font-size: 0.9rem;
-  }
-
-  .icon {
-    font-size: 1.3rem;
-    text-align: center;
-  }
-
-  .min-val {
-    text-align: right;
-    font-size: 0.85rem;
-  }
-
-  .max-val {
-    text-align: right;
-    font-size: 0.9rem;
-    font-weight: 700;
-  }
+  .label { font-size: 1rem; }
+  .icon { font-size: 1.5rem; text-align: center; }
+  .min-val { text-align: right; font-size: 0.95rem; }
+  .max-val { text-align: right; font-size: 1rem; font-weight: 700; }
 }
 
 /* Temperature Bar */
 .bar-wrap {
-  height: 6px;
+  height: 8px;
   background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
   position: relative;
@@ -262,9 +280,9 @@
       content: '';
       position: absolute;
       right: -3px;
-      top: -3px;
-      width: 12px;
-      height: 12px;
+      top: -4px;
+      width: 14px;
+      height: 14px;
       background: white;
       border-radius: 50%;
       border: 2px solid #ff9800;
@@ -275,14 +293,15 @@
 /* Forecast Button */
 .forecast-btn {
   width: 100%;
-  padding: 14px;
-  margin-top: 16px;
+  padding: 16px;
+  margin-top: 24px;
   border: none;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.15);
   color: white;
   font-family: 'Nunito', sans-serif;
   font-weight: 700;
+  font-size: 1.05rem;
   cursor: pointer;
 
   &:hover {
@@ -290,29 +309,41 @@
   }
 }
 
-/* Arrow */
-.arrow {
-  text-align: center;
-  font-size: 1.5rem;
-  opacity: 0.7;
-  margin-top: 20px;
-  cursor: pointer;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .weather-wrapper {
-    max-width: 100%;
+/* --------------------------------------
+   DESKTOP MEDIA QUERY
+   This fires when the screen is 860px or wider
+--------------------------------------- */
+@media (min-width: 860px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 450px; /* Splits screen into 2 columns */
+    align-items: start;
+    gap: 40px;
   }
 
-  .hourly {
-    .hour-item {
-      min-width: 50px;
+  .hero {
+    padding-top: 40px;
+    align-items: center;
+
+    .temp {
+      font-size: 7rem; /* Massive temp font for desktop */
     }
   }
+  
+  .graph {
+    margin-top: 40px;
+  }
+}
 
+/* Responsive fixes for small phones */
+@media (max-width: 480px) {
+  .hourly .hour-item {
+    min-width: 50px;
+  }
   .day-row {
     grid-template-columns: 70px 28px 32px 1fr 32px;
     gap: 6px;
+  }
+  .hero .temp {
+    font-size: 4rem;
   }
 }

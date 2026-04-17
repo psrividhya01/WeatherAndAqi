@@ -1,0 +1,70 @@
+<div class="dashboard-wrapper">
+  
+  <div class="banner offline-banner" *ngIf="isOffline">
+    ⚠️ You are offline. Showing cached data from {{ lastFetched }}. Search is disabled.
+  </div>
+
+  <div class="alert-container">
+    <div class="banner alert-banner" *ngFor="let alert of alerts">
+      <div class="alert-content">
+        <strong>{{ alert.type }} ({{ alert.severity }}):</strong> {{ alert.message }}
+      </div>
+      <button class="close-btn" (click)="dismissAlert(alert.id)">✖</button>
+    </div>
+  </div>
+
+  <div class="digest-overlay" *ngIf="showDigest">
+    <div class="digest-card card">
+      <h3>🌤️ Good Morning! Today's Outlook for {{ digestData.city }}</h3>
+      <p>{{ digestData.summary }}</p>
+      <button class="btn-primary" (click)="closeDigest()">Got it</button>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    
+    <div class="left-col">
+      <div class="search-bar">
+        <input type="text" placeholder="Search for a city..." 
+               [(ngModel)]="searchQuery" [disabled]="isOffline">
+        <button class="btn-primary" [disabled]="isOffline">Search</button>
+      </div>
+
+      <h3 class="section-title">Your Locations</h3>
+      <div class="city-grid">
+        <div class="city-tile card" *ngFor="let city of savedCities">
+          <div class="tile-header">
+            <h4>{{ city.name }}</h4>
+            <button class="fav-btn" (click)="toggleFavorite(city)">
+              {{ city.isFavorite ? '❤️' : '🤍' }}
+            </button>
+          </div>
+          <div class="tile-data">
+            <span class="temp">{{ city.temp }}°C</span>
+            <span class="aqi">AQI: {{ city.aqi }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <h3 class="section-title">Dashboard Settings</h3>
+      <div class="settings-panel card">
+        <p class="desc">Toggle and drag to reorder your dashboard layout.</p>
+        
+        <div cdkDropList class="widget-list" (cdkDropListDropped)="dropWidget($event)">
+          <div class="widget-box" *ngFor="let widget of widgets" cdkDrag>
+            <div class="drag-handle" cdkDragHandle>☰</div>
+            <span class="w-name">{{ widget.name }}</span>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="widget.visible" (ngModelChange)="onToggleChange(widget.id, $event)">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+  </div>
+</div>
