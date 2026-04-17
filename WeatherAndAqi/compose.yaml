@@ -1,0 +1,7 @@
+﻿services:
+  weatherandaqi:
+    image: weatherandaqi
+    build:
+      context: .
+      dockerfile: WeatherAndAqi/Dockerfile
+
