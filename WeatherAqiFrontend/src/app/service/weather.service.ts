@@ -31,6 +31,15 @@ export class WeatherService {
     return this.http.get<any[]>(`${this.apiUrl}/weather/multi?cities=${cityQuery}`);
   }
 
+  getNearbyCities(lat: number, lon: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/weather/nearby?lat=${lat}&lon=${lon}`);
+  }
+
+  getMultiAQI(cities: string[]): Observable<any[]> {
+    const cityQuery = cities.join(',');
+    return this.http.get<any[]>(`${this.apiUrl}/weather/aqi/multi?cities=${cityQuery}`);
+  }
+
   getSimilarCities(temp: number, condition: string, humidity: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/weather/similar?temp=${temp}&condition=${condition}&humidity=${humidity}`);
   }

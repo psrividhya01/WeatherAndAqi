@@ -29,6 +29,7 @@ export class MultiCityComponent implements OnInit, AfterViewInit {
   simCondition = 'Sunny';
   simHumidity = 'Low';
   similarCities: any[] = [];
+  exportTimestamp = '';
 
   private map!: L.Map;
 
@@ -134,15 +135,20 @@ export class MultiCityComponent implements OnInit, AfterViewInit {
   // --- UC5: Export Dashboard as Image ---
   exportDashboard() {
     const element = this.exportTarget.nativeElement;
-    
-    // html2canvas takes the DOM element and renders it to a Canvas
-    html2canvas(element, { useCORS: true, backgroundColor: '#1a1a2e' }).then(canvas => {
+    this.exportTimestamp = new Date().toLocaleString();
+
+    html2canvas(element, {
+      useCORS: true,
+      backgroundColor: '#1a1a2e',
+      scale: window.devicePixelRatio || 1
+    }).then(canvas => {
       canvas.toBlob((blob) => {
         if (blob) {
+          const fileName = `MultiCity_Weather_Dashboard_${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Weather_Dashboard_${new Date().toISOString().split('T')[0]}.png`;
+          link.download = fileName;
           link.click();
           window.URL.revokeObjectURL(url);
         }

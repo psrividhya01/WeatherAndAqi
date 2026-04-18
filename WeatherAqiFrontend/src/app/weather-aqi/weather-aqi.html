@@ -1,4 +1,4 @@
-<div class="weather-wrapper" [style.backgroundImage]="getWeatherBackgroundImage(condition, aqi)">
+<div class="weather-wrapper" [style.backgroundImage]="getWeatherBackgroundImage(condition, aqi)" #dashboardExport>
   
   <div class="dashboard-container">
     
@@ -11,10 +11,12 @@
           <div class="dropdown" *ngIf="menuOpen">
             <button (click)="goToSettings()">⚙️ Settings</button>
             <button (click)="shareWeather()">↗️ Share</button>
+            <button (click)="exportDashboard()">📸 Export Snapshot</button>
           </div>
         </div>
       </div>
     </div>
+    <div class="export-timestamp">Snapshot: {{ exportTimestamp || 'Not captured yet' }}</div>
 
     <div class="dashboard-grid">
       

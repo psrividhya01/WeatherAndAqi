@@ -1,5 +1,6 @@
 using System.Text.Json;
 using WeatherAPI.DTOs;
+using WeatherAPI.Models;
 
 namespace WeatherAPI.Mapping
 {
@@ -24,6 +25,16 @@ namespace WeatherAPI.Mapping
                 So2 = components.GetProperty("so2").GetDouble(),
                 Pm2_5 = components.GetProperty("pm2_5").GetDouble(),
                 Pm10 = components.GetProperty("pm10").GetDouble()
+            };
+        }
+
+        public static HealthAdvisoryDto MapToHealthAdvisoryDto(AQIAdvisory advisory)
+        {
+            return new HealthAdvisoryDto
+            {
+                Category = advisory.Category,
+                Advisory = advisory.Advisory,
+                SensitiveGroupNote = advisory.SensitiveGroupNote
             };
         }
 

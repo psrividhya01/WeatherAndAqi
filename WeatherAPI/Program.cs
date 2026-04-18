@@ -9,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Swagger services
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 builder.Services.AddOpenApi();
 
 // ─── CORS — Allow Angular frontend to call this API ───────────────────────────
@@ -34,23 +39,31 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IWeatherCacheRepository, WeatherCacheRepository>();
 builder.Services.AddScoped<IHourlyCacheRepository, HourlyCacheRepository>();
 builder.Services.AddScoped<IForecastCacheRepository, ForecastCacheRepository>();
-builder.Services.AddScoped<IAQICacheRepository, AQICacheRepository>(); // NEW
+builder.Services.AddScoped<IAQICacheRepository, AQICacheRepository>();
+builder.Services.AddScoped<ICityCoordinateRepository, CityCoordinateRepository>();
+builder.Services.AddScoped<ICachedCityWeatherRepository, CachedCityWeatherRepository>();
+builder.Services.AddScoped<IAQIHistoryRepository, AQIHistoryRepository>();
+builder.Services.AddScoped<IWeatherAlertRepository, WeatherAlertRepository>();
+builder.Services.AddScoped<IAQIAdvisoryRepository, AQIAdvisoryRepository>();
+builder.Services.AddScoped<IFavoriteCityRepository, FavoriteCityRepository>();
+builder.Services.AddScoped<IUserPreferenceRepository, UserPreferenceRepository>();
 
 // ─── External API Clients ─────────────────────────────────────────────────────
 builder.Services.AddHttpClient<IWeatherApiClient, WeatherApiClient>();
-builder.Services.AddHttpClient<IAQIApiClient, AQIApiClient>(); // NEW
+builder.Services.AddHttpClient<IAQIApiClient, AQIApiClient>();
 
 // ─── Services ─────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IWeatherService, WeatherService>();
 builder.Services.AddScoped<IForecastService, ForecastService>();
-builder.Services.AddScoped<IAQIService, AQIService>(); // NEW
+builder.Services.AddScoped<IAQIService, AQIService>();
 
 var app = builder.Build();
 
 // ─── Middleware Pipeline ───────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(); 
 }
 
 app.UseHttpsRedirection();

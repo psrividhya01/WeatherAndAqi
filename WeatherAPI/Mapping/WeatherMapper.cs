@@ -21,7 +21,9 @@ namespace WeatherAPI.Mapping
                 WindSpeed = root.GetProperty("wind").GetProperty("speed").GetDouble(),
                 Visibility = root.TryGetProperty("visibility", out var vis) ? vis.GetInt32() : 0,
                 ConditionCode = root.GetProperty("weather")[0].GetProperty("id").GetInt32(),
-                Description = root.GetProperty("weather")[0].GetProperty("description").GetString() ?? string.Empty
+                Description = root.GetProperty("weather")[0].GetProperty("description").GetString() ?? string.Empty,
+                Latitude = root.GetProperty("coord").GetProperty("lat").GetDouble(),
+                Longitude = root.GetProperty("coord").GetProperty("lon").GetDouble()
             };
         }
 

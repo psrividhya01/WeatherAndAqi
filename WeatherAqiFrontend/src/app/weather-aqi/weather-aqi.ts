@@ -1,5 +1,6 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import html2canvas from 'html2canvas';
 import { WeatherService } from '../service/weather.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
@@ -15,6 +16,9 @@ import { WeatherStateService, WidgetConfig } from '../service/weather-state.serv
 })
 export class WeatherAqi implements OnInit, AfterViewInit {
   @ViewChild('aqiChart') aqiChartRef!: ElementRef;
+  @ViewChild('dashboardExport') dashboardExport!: ElementRef;
+
+  exportTimestamp = '';
 
   // --- Weather Variables ---
   city = '';
@@ -243,6 +247,35 @@ export class WeatherAqi implements OnInit, AfterViewInit {
   goToSettings() {
     this.menuOpen = false;
     this.router.navigate(['/settings']);
+  }
+
+  exportDashboard() {
+    const element = this.dashboardExport?.nativeElement;
+    if (!element) {
+      return;
+    }
+
+    this.exportTimestamp = new Date().toLocaleString();
+
+    html2canvas(element, {
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      scale: window.devicePixelRatio || 1
+    }).then((canvas: HTMLCanvasElement) => {
+      canvas.toBlob((blob: Blob | null) => {
+        if (!blob) {
+          return;
+        }
+
+        const fileName = `${this.city.replace(/\s+/g, '_')}_Dashboard_${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      });
+    });
   }
 
   shareWeather() {

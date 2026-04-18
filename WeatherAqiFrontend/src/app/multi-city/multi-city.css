@@ -180,3 +180,9 @@
   .main-grid { grid-template-columns: 1fr; }
   .city-grid { grid-template-columns: 1fr; }
 }
+
+.export-timestamp {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}

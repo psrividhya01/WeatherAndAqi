@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WeatherAPI.DTOs;
@@ -12,14 +14,24 @@ namespace WeatherAPI.Services
     {
         private readonly IAQICacheRepository _repo;
         private readonly IAQIApiClient _api;
-        private readonly IWeatherApiClient _weatherApi; // To get lat/lon from city name
+        private readonly IWeatherApiClient _weatherApi;
+        private readonly IAQIHistoryRepository _historyRepository;
+        private readonly IAQIAdvisoryRepository _advisoryRepository;
         private readonly ILogger<AQIService> _logger;
 
-        public AQIService(IAQICacheRepository repo, IAQIApiClient api, IWeatherApiClient weatherApi, ILogger<AQIService> logger)
+        public AQIService(
+            IAQICacheRepository repo,
+            IAQIApiClient api,
+            IWeatherApiClient weatherApi,
+            IAQIHistoryRepository historyRepository,
+            IAQIAdvisoryRepository advisoryRepository,
+            ILogger<AQIService> logger)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
             _api = api ?? throw new ArgumentNullException(nameof(api));
             _weatherApi = weatherApi ?? throw new ArgumentNullException(nameof(weatherApi));
+            _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
+            _advisoryRepository = advisoryRepository ?? throw new ArgumentNullException(nameof(advisoryRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -57,6 +69,62 @@ namespace WeatherAPI.Services
                 _logger.LogError(ex, "Error fetching AQI for {CityName}", cityName);
                 throw;
             }
+        }
+
+        public async Task<List<AQIDto>> GetMultiAQIAsync(IEnumerable<string> cities)
+        {
+            if (cities == null)
+            {
+                return new List<AQIDto>();
+            }
+
+            var cityList = cities
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var tasks = cityList.Select(GetAQIAsync).ToList();
+            await Task.WhenAll(tasks.Cast<Task>());
+            return tasks.Select(t => t.Result).ToList();
+        }
+
+        public async Task<AQITrendDto> GetAQITrendAsync(string cityName, int days = 7)
+        {
+            var history = await _historyRepository.GetTrendAsync(cityName, days);
+            var trendData = new List<AQITrendEntryDto>();
+
+            foreach (var entry in history)
+            {
+                trendData.Add(new AQITrendEntryDto
+                {
+                    RecordedDate = entry.RecordedDate,
+                    AQIScore = entry.AQIScore,
+                    Category = GetAqiCategoryStatic(entry.AQIScore)
+                });
+            }
+
+            return new AQITrendDto { City = cityName, TrendData = trendData };
+        }
+
+        public async Task<HealthAdvisoryDto> GetHealthAdvisoryAsync(int aqi)
+        {
+            var category = GetAqiCategoryStatic(aqi);
+            var advisory = await _advisoryRepository.GetAdvisoryAsync(category);
+            return AQIMapper.MapToHealthAdvisoryDto(advisory);
+        }
+
+        private static string GetAqiCategoryStatic(int aqi)
+        {
+            return aqi switch
+            {
+                <= 50 => "Good",
+                <= 100 => "Moderate",
+                <= 150 => "Sensitive",
+                <= 200 => "Unhealthy",
+                <= 300 => "Very Unhealthy",
+                _ => "Hazardous"
+            };
         }
     }
 }
