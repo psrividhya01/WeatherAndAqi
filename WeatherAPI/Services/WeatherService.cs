@@ -48,7 +48,11 @@ namespace WeatherAPI.Services
                 {
                     _logger.LogInformation("Cache miss for {CityName}. Fetching current weather from API.", cityName);
                     jsonResponse = await _api.GetWeatherAsync(cityName);
-                    await _repo.SaveWeatherAsync(cityName, jsonResponse);
+                    
+                    using var docTemp = JsonDocument.Parse(jsonResponse);
+                    var dtoTemp = WeatherMapper.MapToCurrentWeatherDto(cityName, docTemp);
+                    
+                    await _repo.SaveWeatherAsync(cityName, jsonResponse, dtoTemp.Temperature, dtoTemp.Description, dtoTemp.Humidity, dtoTemp.Lat, dtoTemp.Lon);
                 }
 
                 using var doc = JsonDocument.Parse(jsonResponse);
@@ -60,6 +64,14 @@ namespace WeatherAPI.Services
                 throw;
             }
         }
+
+        public async Task<CurrentWeatherDto> GetCurrentWeatherAsync(double lat, double lon)
+        {
+            string json = await _api.GetWeatherAsync(lat, lon);
+            using var doc = JsonDocument.Parse(json);
+            return WeatherMapper.MapToCurrentWeatherDto($"[{lat:F2}, {lon:F2}]", doc);
+        }
+
 
         public async Task<HourlyWeatherDto> GetHourlyWeatherAsync(string cityName)
         {
@@ -89,29 +101,54 @@ namespace WeatherAPI.Services
             }
         }
 
-        // UC: Unified Dashboard (Enhanced with smart logic)
+        public async Task<HourlyWeatherDto> GetHourlyWeatherAsync(double lat, double lon)
+        {
+            string json = await _api.GetHourlyWeatherAsync(lat, lon);
+            using var doc = JsonDocument.Parse(json);
+            return WeatherMapper.MapToHourlyWeatherDto($"[{lat:F2}, {lon:F2}]", doc);
+        }
+
+
+        // UC: Unified Dashboard (Enhanced with smart logic and parallelism)
         public async Task<WeatherResponseDto> GetWeatherDashboardAsync(string cityName)
         {
-            _logger.LogInformation("Fetching unified dashboard data for {CityName}", cityName);
-
-            // Sequential fetch to ensure thread safety for the Scoped DbContext
-            var current = await GetCurrentWeatherAsync(cityName);
-            var hourly = await GetHourlyWeatherAsync(cityName);
-            var forecast = await _forecastService.GetForecastAsync(cityName);
-            var aqi = await _aqiService.GetAQIAsync(cityName);
-
-            // ENHANCEMENT: Generate a Smart Summary
-            string summary = GenerateDashboardSummary(current, aqi);
-
+            var result = await GetDashboardAsync(null, null, cityName);
+            
             return new WeatherResponseDto
             {
-                City = cityName,
+                City = result.City,
                 Timestamp = DateTime.Now,
-                Summary = summary,
-                CurrentWeather = current,
-                Hourly = hourly.Hours,
-                Forecast = forecast.Days,
-                AQI = aqi
+                Summary = GenerateDashboardSummary(result.CurrentWeather!, result.AQI!),
+                CurrentWeather = result.CurrentWeather,
+                Hourly = result.Hourly,
+                Forecast = result.Forecast,
+                AQI = result.AQI
+            };
+        }
+
+        public async Task<DashboardDto> GetDashboardAsync(double? lat, double? lon, string? city)
+        {
+            if (lat == null || lon == null)
+            {
+                var coords = await _api.GetCityCoordinates(city!);
+                lat = coords.lat;
+                lon = coords.lon;
+            }
+
+            var currentTask = GetCurrentWeatherAsync(lat.Value, lon.Value);
+            var forecastTask = _forecastService.GetForecastAsync(lat.Value, lon.Value);
+            var hourlyTask = GetHourlyWeatherAsync(lat.Value, lon.Value);
+            var aqiTask = _aqiService.GetAQIAsync(lat.Value, lon.Value);
+
+            await Task.WhenAll(currentTask, forecastTask, hourlyTask, aqiTask);
+
+            return new DashboardDto
+            {
+                City = city ?? $"[{lat.Value:F2}, {lon.Value:F2}]",
+                CurrentWeather = currentTask.Result,
+                Forecast = forecastTask.Result.Days,
+                Hourly = hourlyTask.Result.Hours,
+                AQI = aqiTask.Result
             };
         }
 
@@ -126,5 +163,95 @@ namespace WeatherAPI.Services
 
             return $"{weatherNote} {aqiNote} Don't forget to check the hourly timeline for changes!";
         }
+
+        public async Task<List<CurrentWeatherDto>> GetMultiCityWeatherAsync(string[] cities)
+        {
+            var tasks = cities.Select(city => GetCurrentWeatherAsync(city));
+            var results = await Task.WhenAll(tasks);
+            return results.ToList();
+        }
+
+        public async Task<List<CurrentWeatherDto>> GetNearbyCitiesAsync(double lat, double lon)
+        {
+            // Dynamic nearby cities based on cached data within approx ~150km radius (simple coord delta)
+            var caches = await _repo.GetRecentCachesAsync();
+            
+            return caches
+                .Where(c => Math.Abs(c.Lat - lat) < 1.5 && Math.Abs(c.Lon - lon) < 1.5)
+                .OrderBy(c => Math.Pow(c.Lat - lat, 2) + Math.Pow(c.Lon - lon, 2)) // Order by proximity
+                .Take(5)
+                .Select(c => {
+                    using var doc = JsonDocument.Parse(c.ResponseJson);
+                    return WeatherMapper.MapToCurrentWeatherDto(c.CityName, doc);
+                })
+                .ToList();
+        }
+
+
+        public List<CitySimilarityDto> FindSimilar(double temp, string condition, double humidity)
+        {
+            // Use repository to get recent caches and find similar ones
+            var caches = _repo.GetRecentCachesAsync().Result; 
+            
+            return caches
+                .Where(c => c.Condition.Contains(condition, StringComparison.OrdinalIgnoreCase))
+                .Select(c => new
+                {
+                    Cache = c,
+                    Score = Math.Abs(c.Temperature - temp) + Math.Abs(c.Humidity - humidity)
+                })
+                .OrderBy(x => x.Score)
+                .Take(3)
+                .Select(x => new CitySimilarityDto
+                {
+                    CityName = x.Cache.CityName,
+                    Temperature = x.Cache.Temperature,
+                    Condition = x.Cache.Condition,
+                    SimilarityScore = x.Score
+                })
+                .ToList();
+        }
+
+        public async Task<(double Latitude, double Longitude)?> GetCoordinatesAsync(string city)
+        {
+            try
+            {
+                var coords = await _api.GetCityCoordinates(city);
+                return (coords.lat, coords.lon);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<WeatherDigestDto> GetDailyDigestAsync(string city)
+        {
+            try
+            {
+                var weather = await GetCurrentWeatherAsync(city);
+                var aqi = await _aqiService.GetAQIAsync(weather.Lat, weather.Lon);
+
+                var summary = $"Today's Outlook for {city}: Temp {weather.Temperature}°C, " +
+                              $"{weather.Description}, AQI {aqi.AQIScore} ({aqi.Category}). " +
+                              "Stay hydrated and avoid peak sun hours.";
+
+                return new WeatherDigestDto
+                {
+                    Summary = summary
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating daily digest for {City}", city);
+                throw;
+            }
+        }
+
+        private List<WeatherAlertDto> ExtractAlerts(JsonElement root)
+        {
+            return WeatherMapper.MapToAlerts(root);
+        }
     }
 }
+

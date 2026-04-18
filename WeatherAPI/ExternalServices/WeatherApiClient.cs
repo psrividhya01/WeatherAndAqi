@@ -25,6 +25,14 @@ namespace WeatherAPI.ExternalServices
             return await response.Content.ReadAsStringAsync();
         }
 
+        public async Task<string> GetWeatherAsync(double lat, double lon)
+        {
+            var url = $"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={_apiKey}&units=metric";
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
         public async Task<string> GetForecastAsync(string cityName)
         {
             var url = $"https://api.openweathermap.org/data/2.5/forecast?q={cityName}&appid={_apiKey}&units=metric";
@@ -34,10 +42,25 @@ namespace WeatherAPI.ExternalServices
             return await response.Content.ReadAsStringAsync();
         }
 
+        public async Task<string> GetForecastAsync(double lat, double lon)
+        {
+            var url = $"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={_apiKey}&units=metric";
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
         public async Task<string> GetHourlyWeatherAsync(string cityName)
         {
-            // Uses free OWM 5-day/3-hour forecast endpoint; service takes first 8 items = next 24 hours
             var url = $"https://api.openweathermap.org/data/2.5/forecast?q={cityName}&appid={_apiKey}&units=metric";
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public async Task<string> GetHourlyWeatherAsync(double lat, double lon)
+        {
+            var url = $"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={_apiKey}&units=metric";
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
@@ -45,17 +68,16 @@ namespace WeatherAPI.ExternalServices
 
         public async Task<string> GetAQIData(string city)
         {
-            // 1. Resolve City to Coordinates using the weather endpoint
-            var weatherUrl = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={_apiKey}";
-            var weatherResponse = await _httpClient.GetStringAsync(weatherUrl);
-            
-            using var doc = System.Text.Json.JsonDocument.Parse(weatherResponse);
-            var lat = doc.RootElement.GetProperty("coord").GetProperty("lat").GetDouble();
-            var lon = doc.RootElement.GetProperty("coord").GetProperty("lon").GetDouble();
+            var coords = await GetCityCoordinates(city);
+            return await GetAQIData(coords.lat, coords.lon);
+        }
 
-            // 2. Fetch Air Pollution Data
+        public async Task<string> GetAQIData(double lat, double lon)
+        {
             var aqiUrl = $"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={_apiKey}";
-            return await _httpClient.GetStringAsync(aqiUrl);
+            var response = await _httpClient.GetAsync(aqiUrl);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
         }
 
         public async Task<(double lat, double lon)> GetCityCoordinates(string city)
@@ -70,3 +92,4 @@ namespace WeatherAPI.ExternalServices
         }
     }
 }
+

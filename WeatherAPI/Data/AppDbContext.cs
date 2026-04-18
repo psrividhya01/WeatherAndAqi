@@ -16,5 +16,8 @@ namespace WeatherAPI.Data
         public DbSet<AQIAdvisory> AQIAdvisories { get; set; }
         public DbSet<AQIHistory> AQIHistories { get; set; }
         public DbSet<PollutantInfo> PollutantInfos { get; set; }
+        public DbSet<FavoriteCity> FavoriteCities { get; set; }
+        public DbSet<DashboardConfig> DashboardConfigs { get; set; }
+        public DbSet<WeatherAlert> WeatherAlerts { get; set; }
     }
 }

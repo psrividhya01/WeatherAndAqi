@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using WeatherAPI.Interfaces;
 using WeatherAPI.DTOs;
@@ -17,13 +18,28 @@ namespace WeatherAPI.Controllers
         }
 
         [HttpGet("current")]
-        public async Task<IActionResult> GetAQI([FromQuery] string city)
+        public async Task<IActionResult> GetAQI(double? lat, double? lon, string? city)
         {
-            if (string.IsNullOrWhiteSpace(city))
-                return BadRequest(ApiResponse<string>.Fail("City name is required."));
+            if (!lat.HasValue && !lon.HasValue && string.IsNullOrWhiteSpace(city))
+                return BadRequest(ApiResponse<string>.Fail("Either city or lat/lon must be provided."));
 
-            var result = await _service.GetAQIAsync(city);
+            AQIDto result;
+            if (lat.HasValue && lon.HasValue)
+                result = await _service.GetAQIAsync(lat.Value, lon.Value);
+            else
+                result = await _service.GetAQIAsync(city!);
+
             return Ok(ApiResponse<AQIDto>.Ok(result));
+        }
+
+        [HttpGet("multi")]
+        public async Task<IActionResult> GetMultiAQI(string cities)
+        {
+            if (string.IsNullOrWhiteSpace(cities))
+                return BadRequest(ApiResponse<string>.Fail("Cities list is required."));
+
+            var result = await _service.GetMultiAQI(cities.Split(','));
+            return Ok(ApiResponse<List<AQIDto>>.Ok(result));
         }
 
         [HttpGet("trend")]
@@ -37,3 +53,4 @@ namespace WeatherAPI.Controllers
         }
     }
 }
+

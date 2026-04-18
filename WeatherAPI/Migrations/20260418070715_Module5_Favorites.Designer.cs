@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WeatherAPI.Data;
 
@@ -11,9 +12,11 @@ using WeatherAPI.Data;
 namespace WeatherAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418070715_Module5_Favorites")]
+    partial class Module5_Favorites
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,23 +102,6 @@ namespace WeatherAPI.Migrations
                     b.HasKey("HistoryId");
 
                     b.ToTable("AQIHistories");
-                });
-
-            modelBuilder.Entity("WeatherAPI.Models.DashboardConfig", b =>
-                {
-                    b.Property<int>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
-
-                    b.Property<string>("ConfigJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("DashboardConfigs");
                 });
 
             modelBuilder.Entity("WeatherAPI.Models.FavoriteCity", b =>
@@ -210,38 +196,6 @@ namespace WeatherAPI.Migrations
                     b.HasKey("PollutantCode");
 
                     b.ToTable("PollutantInfos");
-                });
-
-            modelBuilder.Entity("WeatherAPI.Models.WeatherAlert", b =>
-                {
-                    b.Property<int>("AlertId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlertId"));
-
-                    b.Property<string>("AlertType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CityName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Severity")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("AlertId");
-
-                    b.ToTable("WeatherAlerts");
                 });
 
             modelBuilder.Entity("WeatherAPI.Models.WeatherCache", b =>

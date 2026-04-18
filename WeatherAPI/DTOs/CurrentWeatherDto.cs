@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace WeatherAPI.DTOs
 {
     public class CurrentWeatherDto
@@ -10,5 +12,9 @@ namespace WeatherAPI.DTOs
         public int Visibility { get; set; }
         public int ConditionCode { get; set; }
         public string Description { get; set; } = string.Empty;
+        public double Lat { get; set; }
+        public double Lon { get; set; }
+        public List<WeatherAlertDto>? Alerts { get; set; }
     }
 }
+
