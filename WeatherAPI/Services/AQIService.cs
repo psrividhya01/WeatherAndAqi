@@ -38,20 +38,37 @@ namespace WeatherAPI.Services
                 await _repo.SaveAQI(city, json);
             }
 
+            return await ParseAQIJson(city, json);
+        }
+
+        public async Task<AQIDto> GetAQIAsync(double lat, double lon)
+        {
+            string json = await _api.GetAQIData(lat, lon);
+            // Optional: We could try to resolve the city name from the JSON if available
+            using var doc = JsonDocument.Parse(json);
+            string cityName = $"[{lat:F2}, {lon:F2}]";
+            return await ParseAQIJson(cityName, json);
+        }
+
+        public async Task<List<AQIDto>> GetMultiAQI(string[] cities)
+        {
+            var tasks = cities.Select(city => GetAQIAsync(city));
+            var results = await Task.WhenAll(tasks);
+            return results.ToList();
+        }
+
+        private async Task<AQIDto> ParseAQIJson(string city, string json)
+        {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement.GetProperty("list")[0];
             var aqiRaw = root.GetProperty("main").GetProperty("aqi").GetInt32();
             var components = root.GetProperty("components");
 
-            // 1. Correct AQI Category Mapping (Module 3 Task 2)
             var category = GetProperAQICategory(aqiRaw);
-
-            // 2. Fetch Pollutant Info from DB (Module 3 Task 5)
             var pollutantMaster = await _context.PollutantInfos.ToListAsync();
             var advisory = await _context.AQIAdvisories
                 .FirstOrDefaultAsync(a => a.Category == category);
 
-            // 3. Map pollutants with safety limits and descriptions
             var pollutants = new Dictionary<string, PollutantDto>
             {
                 ["pm25"] = MapPollutant("pm2_5", components, 25, pollutantMaster),
@@ -77,6 +94,7 @@ namespace WeatherAPI.Services
                 Advisory = advisory?.Advisory ?? "No advisory available."
             };
         }
+
 
         public async Task<List<AQITrendDto>> GetAQITrendAsync(string city)
         {

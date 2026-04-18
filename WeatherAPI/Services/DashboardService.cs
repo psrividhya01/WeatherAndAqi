@@ -21,8 +21,21 @@ namespace WeatherAPI.Services
             _aqiService = aqiService;
         }
 
-        public async Task<WeatherResponseDto> GetDashboardAsync(string city)
+        public async Task<WeatherResponseDto> GetDashboardAsync(string city, double? lat, double? lon)
         {
+
+            if (lat == null || lon == null)
+            {
+                var coordinates = await _weatherService.GetCoordinatesAsync(city!);
+                if (coordinates == null)
+                {
+                    throw new System.Exception("Unable to retrieve location data for the specified city.");
+                }
+                lat = coordinates.Value.Latitude;
+                lon = coordinates.Value.Longitude;
+            }
+
+
             // 🚀 Call all services in parallel for performance
             var currentTask = _weatherService.GetCurrentWeatherAsync(city);
             var hourlyTask = _weatherService.GetHourlyWeatherAsync(city);

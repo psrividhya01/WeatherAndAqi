@@ -21,9 +21,34 @@ namespace WeatherAPI.Mapping
                 WindSpeed = root.GetProperty("wind").GetProperty("speed").GetDouble(),
                 Visibility = root.TryGetProperty("visibility", out var vis) ? vis.GetInt32() : 0,
                 ConditionCode = root.GetProperty("weather")[0].GetProperty("id").GetInt32(),
-                Description = root.GetProperty("weather")[0].GetProperty("description").GetString() ?? string.Empty
+                Description = root.GetProperty("weather")[0].GetProperty("description").GetString() ?? string.Empty,
+                Lat = root.GetProperty("coord").GetProperty("lat").GetDouble(),
+                Lon = root.GetProperty("coord").GetProperty("lon").GetDouble(),
+                Alerts = MapToAlerts(root)
             };
         }
+
+        public static List<WeatherAlertDto> MapToAlerts(JsonElement root)
+        {
+            var alerts = new List<WeatherAlertDto>();
+
+            if (root.TryGetProperty("alerts", out var alertArray))
+            {
+                foreach (var item in alertArray.EnumerateArray())
+                {
+                    alerts.Add(new WeatherAlertDto
+                    {
+                        Event = item.GetProperty("event").GetString() ?? string.Empty,
+                        Description = item.GetProperty("description").GetString() ?? string.Empty,
+                        Severity = item.TryGetProperty("severity", out var sev) ? sev.GetString() ?? "Moderate" : "Moderate"
+                    });
+                }
+            }
+
+            return alerts;
+        }
+
+
 
         // UC3: Maps raw OWM 3-hourly JSON → HourlyWeatherDto (first 8 items = next 24 hours)
         public static HourlyWeatherDto MapToHourlyWeatherDto(string cityName, JsonDocument doc)
@@ -45,5 +70,20 @@ namespace WeatherAPI.Mapping
 
             return new HourlyWeatherDto { City = cityName, Hours = hours };
         }
+
+        public static CityWeatherDto MapToCityWeatherDto(JsonDocument doc)
+        {
+            var root = doc.RootElement;
+            return new CityWeatherDto
+            {
+                CityName = root.GetProperty("name").GetString() ?? string.Empty,
+                Temperature = root.GetProperty("main").GetProperty("temp").GetDouble(),
+                Condition = root.GetProperty("weather")[0].GetProperty("main").GetString() ?? string.Empty,
+                Humidity = root.GetProperty("main").GetProperty("humidity").GetInt32(),
+                Lat = root.GetProperty("coord").GetProperty("lat").GetDouble(),
+                Lon = root.GetProperty("coord").GetProperty("lon").GetDouble()
+            };
+        }
     }
 }
+

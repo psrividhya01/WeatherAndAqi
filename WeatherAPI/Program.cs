@@ -32,6 +32,7 @@ builder.Services.AddScoped<IWeatherCacheRepository, WeatherCacheRepository>();
 builder.Services.AddScoped<IHourlyCacheRepository, HourlyCacheRepository>();
 builder.Services.AddScoped<IForecastCacheRepository, ForecastCacheRepository>();
 builder.Services.AddScoped<IAQICacheRepository, AQICacheRepository>();
+builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
 
 // External API Clients
 builder.Services.AddHttpClient<IWeatherApiClient, WeatherApiClient>();
@@ -43,6 +44,7 @@ builder.Services.AddScoped<IAQIService, AQIService>();
 
 // Background Jobs (Module 3 Task 3)
 builder.Services.AddHostedService<AQIBackgroundService>();
+builder.Services.AddHostedService<AlertBackgroundService>();
 
 var app = builder.Build();
 

@@ -27,17 +27,32 @@ namespace WeatherAPI.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task SaveWeatherAsync(string cityName, string json)
+        public async Task SaveWeatherAsync(string cityName, string json, double temp, string condition, int humidity, double lat, double lon)
         {
             var cache = new WeatherCache
             {
                 CityName = cityName,
                 ResponseJson = json,
+                Temperature = temp,
+                Condition = condition,
+                Humidity = humidity,
+                Lat = lat,
+                Lon = lon,
                 FetchedAt = DateTime.UtcNow
             };
 
             _context.WeatherCaches.Add(cache);
             await _context.SaveChangesAsync();
         }
+
+
+        public async Task<List<WeatherCache>> GetRecentCachesAsync()
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-24);
+            return await _context.WeatherCaches
+                .Where(w => w.FetchedAt >= cutoff)
+                .ToListAsync();
+        }
     }
 }
+

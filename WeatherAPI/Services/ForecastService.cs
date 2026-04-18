@@ -50,5 +50,21 @@ namespace WeatherAPI.Services
                 throw;
             }
         }
+
+        public async Task<ForecastDto> GetForecastAsync(double lat, double lon)
+        {
+            try
+            {
+                string jsonResponse = await _api.GetForecastAsync(lat, lon);
+                using var doc = JsonDocument.Parse(jsonResponse);
+                return ForecastMapper.MapToForecastDto($"[{lat:F2}, {lon:F2}]", doc);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching forecast for lat:{Lat}, lon:{Lon}", lat, lon);
+                throw;
+            }
+        }
     }
 }
+
